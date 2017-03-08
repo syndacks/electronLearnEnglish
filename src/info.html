@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Learn English with Rodrigo</title>
+  <link rel="stylesheet" href="./css/app.css">
+  <script type="text/javascript">
+    var electron = require('electron');
+    var shell = electron.shell;
+    var ipc = electron.ipcRenderer
+  </script>
+</head>
+
+<body id="page-info">
+  <!-- <div id="App"></div> -->
+  <main class = "info-content">
+    <h3 class="page-headline">Learn English with Rodrigo</h3>
+    <p>
+      Welcome to Rodrigo's English Language Learning Course!<br>
+      <strong>Version 1.0.0</strong><br>
+      <small>Build with love by
+        <a href="#" onclick="shell.openExternal('http://endlessos.org')">
+        Endless</a>
+      </small>
+    </p>
+    <p><a href="#" onclick="ipc.sendSync('closeInfoWindow')">close window</a></p>
+  </main>
+</body>
