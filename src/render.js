@@ -10,10 +10,13 @@ var ipc = electron.ipcRenderer;
 
 import React from 'react';
 import ReactDOM from 'react-dom';
+import {Router, Route, hashHistory} from 'react-router';
+
 import VidList from './components/VidList';
 import Toolbar from './components/Toolbar';
 import VidPlayer from './components/VidPlayer';
-import Paginate from './components/Paginate'
+import Paginate from './components/Paginate';
+import HeaderNav from './components/HeaderNav';
 
 class App extends React.Component {
   constructor(props) {
@@ -21,11 +24,15 @@ class App extends React.Component {
 
     this.state = {
       aptBodyVisible: false,
-      myAppointments: loadApts
+      myAppointments: loadApts,
+      orderBy: 'Name',
+      orderDir: 'asc',
+      queryText: ''
     };
 
-    this.playMessage = this.playMessage.bind(this);
     this.toggleAptDisplay = this.toggleAptDisplay.bind(this);
+    this.searchApts = this.searchApts.bind(this);
+    this.reOrder = this.reOrder.bind(this);
   }
 
   componentDidUpdate() {
@@ -49,6 +56,28 @@ class App extends React.Component {
     ipc.sendSync('openInfoWindow');
   }
 
+  // addItem(tempItem){
+  //   var tempApts = this.state.myAppointments;
+  //   tempApts.push(tempItem);
+  //   this.setState({
+  //     myAppointments: tempApts,
+  //     aptBodyVisible: false
+  //   })
+  // } //addItem
+
+  reOrder(orderBy, orderDir){
+    this.setState({
+      orderBy: orderBy,
+      orderDir: orderDir
+    })
+  }
+
+  searchApts(query){
+    this.setState({
+      queryText: query
+    })
+  }
+
   playMessage(item){
     return(
       <VidPlayer />
@@ -59,7 +88,6 @@ class App extends React.Component {
 
   }
 
-
   // playMessage(item){
   //   var allApts = this.state.myAppointments;
   //   var newApts = _.without(allApts, item);
@@ -69,7 +97,13 @@ class App extends React.Component {
   // } //playMessage
 
   render() {
-    // set the state of this component to "myAppointments"
+    var filteredApts = [];
+    var queryText = this.state.queryText;
+
+    var orderBy = this.state.orderBy;
+    var orderDir = this.state.orderDir;
+
+
     var myAppointments = this.state.myAppointments;
 
     if(this.state.aptBodyVisible === true) {
@@ -78,7 +112,24 @@ class App extends React.Component {
       $('#addAppointment').modal('hide');
     }
 
-    myAppointments = myAppointments.map(function(item, index){
+    for(var i=0; i<myAppointments.length; i++){
+      if(
+        (myAppointments[i].Name.toLowerCase().indexOf(queryText)!=-1)
+        // (myAppointments[i].ownerName.toLowerCase().indexOf(queryText)!=-1) ||
+        // (myAppointments[i].aptDate.toLowerCase().indexOf(queryText)!=-1) ||
+        // (myAppointments[i].aptNotes.toLowerCase().indexOf(queryText)!=-1)||
+      ) {
+        filteredApts.push(myAppointments[i]);
+      }
+    }
+
+    filteredApts = _.orderBy(filteredApts, function(item) {
+      return item[orderBy].toLowerCase();
+    }, orderDir); //orderArray
+
+
+
+    filteredApts = filteredApts.map(function(item, index){
       if(index<21){
       return (
         < VidList
@@ -93,6 +144,14 @@ class App extends React.Component {
 
     return (
       <div className="application">
+
+        <HeaderNav
+          doSearch = {this.searchApts}
+          onReOrder = {this.reOrder}
+          orderBy = {this.state.orderBy}
+          orderDir = {this.state.orderDir}
+        />
+
         <div className="interface">
         <Toolbar
           handleToggle = {this.toggleAptDisplay}
@@ -102,8 +161,8 @@ class App extends React.Component {
           <div className="container">
            <div className="row">
              <div className="appointments col-sm-12">
-               <h2 className="appointments-headline">Aprenda Ingles con Rodrigo</h2>
-               <ul className="item-list media-list"> {myAppointments}</ul>
+              {/*<h2 className="appointments-headline">Choose a video</h2> */}
+               <ul className="item-list media-list"> {filteredApts}</ul>
              </div>{/* col-sm-12 */}
            </div>{/* row */}
 
@@ -114,9 +173,15 @@ class App extends React.Component {
           </div>{/* container */}
         </div>
 
-        </div>
+        // </div>
     );
   }
 }
 
-ReactDOM.render(<App />, document.getElementById('petAppointments'));
+ReactDOM.render((
+
+  <Router history={hashHistory}>
+    <Route path="/" component={App} />
+  </Router>
+
+), document.getElementById('petAppointments'));
